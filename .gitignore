@@ -1,0 +1,35 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Extension specific
+*.zip
+*.crx
+*.pem
+
+# Local documentation / logs
+uploadcontent.txt
+*.log
+npm-debug.log*
+
+# Gemini/AI artifacts
+.gemini/
+.agent/
+brain/
+implementation_plan.md
+task.md
+walkthrough.md

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TabPilot - The Universal Media Remote for Chrome</title>
+    <style>
+        :root {
+            --bg: #0a0e1a;
+            --surface: #141b2d;
+            --primary: #00d4c3;
+            --primary-glow: rgba(0, 212, 195, 0.4);
+            --cyan: #4dd9f7;
+            --text: #e8edf5;
+            --text-dim: #94a3b8;
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Syne', -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .hero-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: url('tabpilot_hero_bg.png') center/cover no-repeat;
+            opacity: 0.6;
+        }
+
+        nav {
+            padding: 24px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        .hero {
+            padding: 120px 0 80px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 72px;
+            font-weight: 800;
+            margin-bottom: 24px;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--text-dim);
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 16px 32px;
+            background: var(--primary);
+            color: var(--bg);
+            text-decoration: none;
+            font-weight: 700;
+            border-radius: 40px;
+            box-shadow: 0 0 20px var(--primary-glow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px var(--primary-glow);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 80px;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            padding: 40px;
+            border-radius: var(--radius);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: border-color 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary);
+        }
+
+        .feature-card h3 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: var(--primary);
+        }
+
+        footer {
+            margin-top: 120px;
+            padding: 40px 0;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        footer a {
+            color: var(--text-dim);
+            text-decoration: none;
+            margin: 0 10px;
+        }
+
+        footer a:hover { color: var(--primary); }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 40px; }
+            .features { grid-template-columns: 1fr; }
+            nav { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-bg"></div>
+    
+    <nav>
+        <div class="logo">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary)">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            TabPilot
+        </div>
+    </nav>
+
+    <div class="container">
+        <section class="hero">
+            <h1>The Universal Remote<br>for Your Browser.</h1>
+            <p>Control YouTube, Netflix, Spotify, and any HTML5 player from one stylish popup. No more hunting through tabs.</p>
+            <a href="#" class="btn">Add to Chrome — It's Free</a>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <h3>Unified Control</h3>
+                <p>Play, pause, skip, and adjust volume for every tab from a single interface.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Live Visuals</h3>
+                <p>See thumbnails, progress bars, and track info in real-time as you switch tabs.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Speed Control</h3>
+                <p>Change playback speed instantly without digging into video settings menu.</p>
+            </div>
+        </section>
+
+        <footer>
+            <p>&copy; 2026 TabPilot Extension. All rights reserved.</p>
+            <p style="margin-top: 10px;">
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="https://github.com/stoner-stoner/tabpilot-extension" target="_blank">GitHub</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

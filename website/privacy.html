@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy - TabPilot</title>
+    <style>
+      :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --bg: #0f172a;
+        --surface: #1e293b;
+        --text: #f8fafc;
+        --text-dim: #94a3b8;
+        --accent: #fbbf24;
+      }
+
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 800px;
+        width: 90%;
+        margin: 40px auto;
+        background: var(--surface);
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 20px;
+      }
+
+      .logo {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--primary);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .logo-icon {
+        background: var(--primary);
+        color: white;
+        padding: 8px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        margin: 0;
+        background: linear-gradient(135deg, #fff 0%, var(--text-dim) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      h2 {
+        color: var(--accent);
+        font-size: 1.25rem;
+        margin-top: 30px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      h2::before {
+        content: "";
+        display: inline-block;
+        width: 4px;
+        height: 18px;
+        background: var(--accent);
+        border-radius: 2px;
+      }
+
+      p {
+        color: var(--text-dim);
+        margin-bottom: 16px;
+      }
+
+      ul {
+        padding-left: 20px;
+        color: var(--text-dim);
+      }
+
+      li {
+        margin-bottom: 8px;
+      }
+
+      .footer {
+        margin-top: 50px;
+        text-align: center;
+        font-size: 0.875rem;
+        color: var(--text-dim);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 20px;
+      }
+
+      .highlight {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      @media (max-width: 640px) {
+        .container {
+          padding: 24px;
+          margin: 20px auto;
+        }
+        h1 {
+          font-size: 1.75rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="logo">
+          <div class="logo-icon">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </div>
+          TabPilot
+        </div>
+        <h1>Privacy Policy</h1>
+        <p>Effective Date: February 20, 2026</p>
+      </div>
+
+      <section>
+        <h2>Overview</h2>
+        <p>
+          TabPilot is built with a
+          <span class="highlight">privacy-first</span> philosophy. Our core
+          mission is to provide a universal media remote while ensuring that
+          your browsing data remains entirely under your control.
+        </p>
+      </section>
+
+      <section>
+        <h2>Data Collection</h2>
+        <p>
+          TabPilot <span class="highlight">does not collect</span>, store, or
+          transmit any personally identifiable information (PII). We do not
+          track your browsing history or account details.
+        </p>
+        <p>
+          To provide its remote control functionality, the extension processes
+          the following data <span class="highlight">locally</span> in your
+          browser:
+        </p>
+        <ul>
+          <li>
+            <span class="highlight">Media Metadata:</span> Titles, duration, and
+            playback status of audio/video elements on open tabs.
+          </li>
+          <li>
+            <span class="highlight">Tab Information:</span> Icons and titles of
+            tabs currently hosting media.
+          </li>
+          <li>
+            <span class="highlight">Local Storage:</span> Your UI preferences
+            (volume, speed, theme) are saved on your device only.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Data Transmission</h2>
+        <p>
+          TabPilot does <span class="highlight">not communicate</span> with any
+          external servers. All processing happens within your browser's private
+          environment. Your data never leaves your computer.
+        </p>
+      </section>
+
+      <section>
+        <h2>Permissions Use</h2>
+        <p>
+          We only request permissions absolutely necessary for the functioning
+          of the extension:
+        </p>
+        <ul>
+          <li>
+            <span class="highlight">Tabs:</span> To identify which of your open
+            tabs are playing media.
+          </li>
+          <li>
+            <span class="highlight">Scripting:</span> To synchronize playback
+            status between your tabs and the remote popup.
+          </li>
+          <li>
+            <span class="highlight">Host Access:</span> To enable control logic
+            on websites that host standard HTML5 media players.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Third-Party Disclosure</h2>
+        <p>
+          We do not sell, trade, or otherwise transfer your data to outside
+          parties. Your browsing activity remains your own.
+        </p>
+      </section>
+
+      <section>
+        <h2>Policy Updates</h2>
+        <p>
+          We may update this policy occasionally to reflect changes in our
+          practices or service updates. Any changes will be posted on this page.
+        </p>
+      </section>
+
+      <div class="footer">
+        &copy; 2026 TabPilot Extension. Simple. Private. Powerful.
+      </div>
+    </div>
+  </body>
+</html>
