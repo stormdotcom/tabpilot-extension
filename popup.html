@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TabPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --bg2: #0f1525;
+      --bg3: #141929;
+      --surface: #1a2035;
+      --surface2: #1f2840;
+      --border: rgba(0, 212, 195, 0.12);
+      --border2: rgba(0, 212, 195, 0.06);
+      --teal: #00d4c3;
+      --teal-dim: rgba(0, 212, 195, 0.15);
+      --teal-glow: rgba(0, 212, 195, 0.4);
+      --cyan: #4dd9f7;
+      --cyan-dim: rgba(77, 217, 247, 0.15);
+      --amber: #f7a824;
+      --amber-dim: rgba(247, 168, 36, 0.15);
+      --red: #ff4d6d;
+      --text: #e8edf5;
+      --text2: #7a8aa8;
+      --text3: #4a5568;
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 380px;
+      min-height: 200px;
+      max-height: 580px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Ambient glow background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -80px;
+      left: -40px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(0,212,195,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px 10px;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-icon {
+      width: 22px;
+      height: 22px;
+      position: relative;
+    }
+
+    .logo-icon svg { width: 100%; height: 100%; }
+
+    .logo-text {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      background: linear-gradient(135deg, var(--teal), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-tabs {
+      display: flex;
+      gap: 2px;
+      background: var(--surface);
+      padding: 3px;
+      border-radius: var(--radius-sm);
+    }
+
+    .tab-btn {
+      padding: 4px 10px;
+      border: none;
+      background: transparent;
+      color: var(--text2);
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+
+    .tab-btn.active {
+      background: var(--teal);
+      color: var(--bg);
+    }
+
+    /* Content panels */
+    .panel { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+    .panel.active { display: flex; }
+
+    /* NOW PLAYING */
+    .now-playing-wrap {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 40px 20px;
+      flex: 1;
+    }
+
+    .empty-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--surface);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+    }
+
+    .empty-state h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text2);
+    }
+
+    .empty-state p {
+      font-size: 12px;
+      color: var(--text3);
+      text-align: center;
+      line-height: 1.5;
+      max-width: 220px;
+    }
+
+    /* Media source selector */
+    .sources-bar {
+      padding: 10px 14px 0;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .source-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .source-chip:hover { border-color: var(--border); }
+    .source-chip.active {
+      background: var(--teal-dim);
+      border-color: var(--teal);
+    }
+
+    .source-chip img {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      object-fit: cover;
+    }
+
+    .source-chip .favicon-fallback {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+    }
+
+    .source-chip span {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text2);
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .source-chip.active span { color: var(--teal); }
+
+    .playing-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 6px var(--teal);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* Main player card */
+    .player-card {
+      margin: 10px 14px 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .player-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--teal), transparent);
+      opacity: 0.5;
+    }
+
+    .player-top {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 12px 14px 10px;
+    }
+
+    .track-art {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      background: var(--surface2);
+      flex-shrink: 0;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .track-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .track-art .default-art {
+      color: var(--text3);
+    }
+
+    .track-info { flex: 1; min-width: 0; }
+
+    .track-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.3;
+    }
+
+    .track-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .track-source {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .track-channel {
+      font-size: 11px;
+      color: var(--text2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .goto-tab-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text3);
+      cursor: pointer;
+      padding: 4px 6px;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .goto-tab-btn:hover {
+      border-color: var(--teal);
+      color: var(--teal);
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      padding: 0 14px 8px;
+    }
+
+    .progress-bar-container {
+      position: relative;
+      height: 3px;
+      background: var(--surface2);
+      border-radius: 2px;
+      cursor: pointer;
+      margin-bottom: 5px;
+    }
+
+    .progress-bar-container:hover { height: 5px; margin-bottom: 3px; }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--teal), var(--cyan));
+      border-radius: 2px;
+      position: relative;
+      transition: width 0.5s linear;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      right: -4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .progress-bar-container:hover .progress-fill::after { opacity: 1; }
+
+    .time-row {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text3);
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 14px 14px;
+    }
+
+    .ctrl-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .ctrl-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text2);
+      padding: 6px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .ctrl-btn:hover {
+      color: var(--text);
+      background: var(--surface2);
+    }
+
+    .ctrl-btn svg { width: 16px; height: 16px; }
+
+    .play-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--teal);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--bg);
+      transition: all 0.2s;
+      box-shadow: 0 0 16px var(--teal-glow);
+    }
+
+    .play-btn:hover {
+      transform: scale(1.06);
+      box-shadow: 0 0 24px var(--teal-glow);
+    }
+
+    .play-btn svg { width: 18px; height: 18px; }
+
+    /* Volume */
+    .volume-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 14px 12px;
+      border-top: 1px solid var(--border2);
+      padding-top: 10px;
+    }
+
+    .vol-icon { color: var(--text3); flex-shrink: 0; }
+    .vol-icon svg { width: 14px; height: 14px; }
+
+    .vol-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 3px;
+      background: var(--surface2);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .vol-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--teal);
+      cursor: pointer;
+    }
+
+    /* Speed selector */
+    .speed-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text3);
+      background: var(--surface2);
+      border: none;
+      border-radius: 4px;
+      padding: 3px 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .speed-btn:hover, .speed-btn.active {
+      color: var(--amber);
+      background: var(--amber-dim);
+    }
+
+    /* TABS panel */
+    .tabs-list {
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+      flex: 1;
+      scrollbar-width: thin;
+      scrollbar-color: var(--surface2) transparent;
+    }
+
+    .media-tab-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .media-tab-item:hover {
+      border-color: var(--border);
+    }
+
+    .media-tab-item.active-source {
+      border-color: var(--teal);
+      background: var(--teal-dim);
+    }
+
+    .tab-item-favicon {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .tab-item-info { flex: 1; min-width: 0; }
+
+    .tab-item-title {
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text);
+    }
+
+    .tab-item-url {
+      font-size: 10px;
+      color: var(--text3);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tab-item-controls {
+      display: flex;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .mini-ctrl {
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 4px 6px;
+      cursor: pointer;
+      color: var(--text2);
+      display: flex;
+      align-items: center;
+      transition: all 0.15s;
+    }
+
+    .mini-ctrl:hover {
+      border-color: var(--teal);
+      color: var(--teal);
+    }
+
+    .mini-ctrl svg { width: 12px; height: 12px; }
+
+    .tab-queue-btn {
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      color: var(--text3);
+      font-size: 10px;
+      font-weight: 600;
+      font-family: 'Syne', sans-serif;
+      transition: all 0.15s;
+    }
+
+    .tab-queue-btn:hover {
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+
+    /* QUEUE panel */
+    .queue-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px 8px;
+    }
+
+    .queue-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .queue-count {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text3);
+    }
+
+    .clear-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text3);
+      font-size: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      padding: 3px 7px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .clear-btn:hover { color: var(--red); }
+
+    .queue-list {
+      padding: 0 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      overflow-y: auto;
+      flex: 1;
+      scrollbar-width: thin;
+      scrollbar-color: var(--surface2) transparent;
+    }
+
+    .queue-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      cursor: grab;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .queue-item:hover {
+      border-color: var(--border);
+    }
+
+    .queue-item.current {
+      border-color: var(--teal);
+      background: var(--teal-dim);
+    }
+
+    .queue-item.dragging {
+      opacity: 0.5;
+      cursor: grabbing;
+    }
+
+    .queue-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text3);
+      width: 16px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .queue-item.current .queue-num {
+      color: var(--teal);
+    }
+
+    .queue-item-art {
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      background: var(--surface2);
+      flex-shrink: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .queue-item-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .queue-item-info { flex: 1; min-width: 0; }
+
+    .queue-item-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .queue-item-source {
+      font-size: 10px;
+      color: var(--text3);
+    }
+
+    .queue-item-actions {
+      display: flex;
+      gap: 3px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .queue-item:hover .queue-item-actions { opacity: 1; }
+
+    .q-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text3);
+      padding: 3px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      transition: all 0.15s;
+    }
+
+    .q-btn:hover { color: var(--text); }
+    .q-btn.del:hover { color: var(--red); }
+    .q-btn svg { width: 12px; height: 12px; }
+
+    .queue-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 30px;
+      flex: 1;
+    }
+
+    .queue-empty p { font-size: 12px; color: var(--text3); text-align: center; }
+
+    /* Add current btn */
+    .add-current-btn {
+      margin: 0 14px 14px;
+      padding: 10px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--text2);
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .add-current-btn:hover {
+      border-color: var(--teal);
+      color: var(--teal);
+      background: var(--teal-dim);
+    }
+
+    .add-current-btn svg { width: 13px; height: 13px; }
+
+    /* Status bar */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 14px;
+      border-top: 1px solid var(--border2);
+      background: var(--bg2);
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text3);
+    }
+
+    .status-dot.live {
+      background: var(--teal);
+      box-shadow: 0 0 6px var(--teal);
+      animation: pulse 2s infinite;
+    }
+
+    .status-text {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .media-count {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text3);
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 2px; }
+
+    /* Speed dropdown */
+    .speed-popover {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      right: 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      display: none;
+      z-index: 100;
+      gap: 2px;
+      flex-direction: column;
+    }
+
+    .speed-popover.open { display: flex; }
+
+    .speed-option {
+      padding: 5px 14px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--text2);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .speed-option:hover { background: var(--surface); color: var(--teal); }
+    .speed-option.selected { color: var(--amber); }
+
+    .player-area {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#00d4c3" opacity="0.9"/>
+          <path d="M2 17l10 5 10-5" stroke="#4dd9f7" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M2 12l10 5 10-5" stroke="#00d4c3" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="logo-text">TabPilot</span>
+    </div>
+    <div class="header-tabs">
+      <button class="tab-btn active" data-panel="player">Now Playing</button>
+      <button class="tab-btn" data-panel="tabs">Tabs</button>
+      <button class="tab-btn" data-panel="queue">Queue</button>
+    </div>
+  </div>
+
+  <!-- Player Panel -->
+  <div class="panel active" id="panel-player">
+    <div class="now-playing-wrap" id="nowPlayingContent">
+
+      <!-- Empty state (shown when no media) -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4a5568" stroke-width="1.5">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+        </div>
+        <h3>No media playing</h3>
+        <p>Open YouTube or any video to start controlling it here.</p>
+      </div>
+
+      <!-- Player (shown when media detected) -->
+      <div id="playerUI" style="display:none;">
+        <div class="sources-bar" id="sourcesBar"></div>
+
+        <div class="player-area">
+          <div class="player-card">
+            <div class="player-top">
+              <div class="track-art" id="trackArt">
+                <svg class="default-art" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
+                </svg>
+              </div>
+              <div class="track-info">
+                <div class="track-title" id="trackTitle">Unknown</div>
+                <div class="track-meta">
+                  <span class="track-channel" id="trackChannel"></span>
+                </div>
+              </div>
+              <button class="goto-tab-btn" id="gotoTabBtn" title="Switch to tab">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                Tab
+              </button>
+            </div>
+
+            <div class="progress-wrap">
+              <div class="progress-bar-container" id="progressBar">
+                <div class="progress-fill" id="progressFill" style="width:0%"></div>
+              </div>
+              <div class="time-row">
+                <span id="currentTime">0:00</span>
+                <span id="duration">0:00</span>
+              </div>
+            </div>
+
+            <div class="controls">
+              <div class="ctrl-group">
+                <button class="ctrl-btn" id="muteBtn" title="Mute">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="ctrl-group">
+                <button class="ctrl-btn" id="skipBackBtn" title="-10s">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <polyline points="1 4 1 10 7 10"/>
+                    <path d="M3.51 15a9 9 0 1 0 .49-3.27"/>
+                    <text x="12" y="14" font-size="5" fill="currentColor" stroke="none" text-anchor="middle">10</text>
+                  </svg>
+                </button>
+                <button class="play-btn" id="playBtn">
+                  <svg viewBox="0 0 24 24" fill="currentColor" id="playIcon">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                </button>
+                <button class="ctrl-btn" id="skipFwdBtn" title="+10s">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <polyline points="23 4 23 10 17 10"/>
+                    <path d="M20.49 15a9 9 0 1 1-.49-3.27"/>
+                    <text x="12" y="14" font-size="5" fill="currentColor" stroke="none" text-anchor="middle">10</text>
+                  </svg>
+                </button>
+              </div>
+              <div class="ctrl-group" style="position:relative;">
+                <button class="speed-btn" id="speedBtn">1×</button>
+                <div class="speed-popover" id="speedPopover">
+                  <div class="speed-option" data-speed="0.5">0.5×</div>
+                  <div class="speed-option" data-speed="0.75">0.75×</div>
+                  <div class="speed-option selected" data-speed="1">1×</div>
+                  <div class="speed-option" data-speed="1.25">1.25×</div>
+                  <div class="speed-option" data-speed="1.5">1.5×</div>
+                  <div class="speed-option" data-speed="2">2×</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="volume-row">
+              <div class="vol-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                </svg>
+              </div>
+              <input type="range" class="vol-slider" id="volumeSlider" min="0" max="1" step="0.01" value="1">
+            </div>
+          </div>
+
+          <button class="add-current-btn" id="addCurrentToQueue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add to Queue
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs Panel -->
+  <div class="panel" id="panel-tabs">
+    <div class="tabs-list" id="tabsList">
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4a5568" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
+          </svg>
+        </div>
+        <h3>No media tabs</h3>
+        <p>Tabs with active video or audio will appear here.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Queue Panel -->
+  <div class="panel" id="panel-queue">
+    <div class="queue-header">
+      <div>
+        <span class="queue-title">Up Next</span>
+        <span class="queue-count" id="queueCount"> — 0 items</span>
+      </div>
+      <button class="clear-btn" id="clearQueueBtn">Clear all</button>
+    </div>
+    <div class="queue-list" id="queueList">
+      <div class="queue-empty">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4a5568" stroke-width="1.5">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+          <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+        <p>Queue is empty.<br>Add tabs from the Now Playing or Tabs view.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="status-left">
+      <div class="status-dot" id="statusDot"></div>
+      <span class="status-text" id="statusText">Scanning...</span>
+    </div>
+    <span class="media-count" id="mediaCount"></span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
