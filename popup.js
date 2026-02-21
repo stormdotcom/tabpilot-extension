@@ -1,8 +1,10 @@
 // TabPilot Popup Script
 
-let state = { tabs: {}, queue: [], activeTabId: null, currentQueueIndex: -1 };
+let state = { tabs: {}, queue: [], activeTabId: null, currentQueueIndex: -1, playlists: [], loopMode: 'none', activePlaylistId: null, activePlaylistIndex: -1 };
 let activePanel = 'player';
 let speedPopoverOpen = false;
+let upNextCollapsed = false;
+let viewingPlaylistId = null; // for detail view
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -23,6 +25,12 @@ function getDomainFromUrl(url) {
   } catch { return url; }
 }
 
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
 // ─── Panel switching ─────────────────────────────────────────────────────────
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -32,6 +40,10 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.add('active');
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.getElementById(`panel-${activePanel}`).classList.add('active');
+    if (activePanel === 'playlists') {
+      viewingPlaylistId = null;
+      renderPlaylists();
+    }
   });
 });
 
@@ -62,13 +74,13 @@ function renderPlayer() {
 
     const dot = tab.isPlaying ? `<div class="playing-dot"></div>` : '';
     const faviconHtml = tab.favicon
-      ? `<img src="${tab.favicon}" alt="" onerror="this.style.display='none'">`
+      ? `<img src="${escapeHtml(tab.favicon)}" alt="" onerror="this.style.display='none'">`
       : `<div class="favicon-fallback">▶</div>`;
 
     chip.innerHTML = `
       ${dot}
       ${faviconHtml}
-      <span>${getDomainFromUrl(tab.url)}</span>
+      <span>${escapeHtml(getDomainFromUrl(tab.url))}</span>
     `;
     chip.addEventListener('click', () => {
       chrome.runtime.sendMessage({ type: 'SET_ACTIVE_TAB', tabId: tab.tabId });
@@ -89,7 +101,7 @@ function renderPlayer() {
   // Art
   if (activeTab.thumbnail || activeTab.favicon) {
     const src = activeTab.thumbnail || activeTab.favicon;
-    trackArt.innerHTML = `<img src="${src}" alt="" onerror="this.innerHTML='<svg class=\\'default-art\\' width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><circle cx=\\'12\\' cy=\\'12\\' r=\\'10\\'/><polygon points=\\'10 8 16 12 10 16 10 8\\'/></svg>'">`;
+    trackArt.innerHTML = `<img src="${escapeHtml(src)}" alt="" onerror="this.parentElement.innerHTML='<svg class=\\'default-art\\' width=\\'20\\' height=\\'20\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><circle cx=\\'12\\' cy=\\'12\\' r=\\'10\\'/><polygon points=\\'10 8 16 12 10 16 10 8\\'/></svg>'">`;
   } else {
     trackArt.innerHTML = `<svg class="default-art" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>`;
   }
@@ -116,9 +128,90 @@ function renderPlayer() {
 
   // Speed btn
   const rate = activeTab.playbackRate || 1;
-  document.getElementById('speedBtn').textContent = rate === 1 ? '1×' : `${rate}×`;
+  document.getElementById('speedBtn').textContent = rate === 1 ? '1x' : `${rate}x`;
   document.querySelectorAll('.speed-option').forEach(opt => {
     opt.classList.toggle('selected', parseFloat(opt.dataset.speed) === rate);
+  });
+
+  // Loop button state
+  const loopBtn = document.getElementById('loopBtn');
+  const loopBadge = document.getElementById('loopBadge');
+  loopBtn.classList.toggle('active', state.loopMode !== 'none');
+  if (state.loopMode === 'one') {
+    loopBadge.textContent = '1';
+  } else if (state.loopMode === 'all') {
+    loopBadge.textContent = 'A';
+  } else {
+    loopBadge.textContent = '';
+  }
+
+  // Up Next
+  renderUpNext(activeTab);
+}
+
+// ─── Render Up Next ──────────────────────────────────────────────────────────
+
+function renderUpNext(activeTab) {
+  const section = document.getElementById('upNextSection');
+  const list = document.getElementById('upNextList');
+  const countEl = document.getElementById('upNextCount');
+
+  if (!activeTab || !activeTab.isYouTube || !activeTab.upNext || activeTab.upNext.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  const items = activeTab.upNext;
+  countEl.textContent = `${items.length}`;
+
+  list.className = 'upnext-list' + (upNextCollapsed ? ' collapsed' : '');
+  document.getElementById('upNextChevron').className = 'upnext-chevron' + (upNextCollapsed ? '' : ' open');
+
+  list.innerHTML = '';
+  items.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'upnext-item';
+    el.innerHTML = `
+      <div class="upnext-thumb">
+        ${item.thumbnailUrl ? `<img src="${escapeHtml(item.thumbnailUrl)}" alt="">` : ''}
+        ${item.duration ? `<span class="upnext-duration">${escapeHtml(item.duration)}</span>` : ''}
+      </div>
+      <div class="upnext-info">
+        <div class="upnext-title">${escapeHtml(item.title)}</div>
+        <div class="upnext-channel">${escapeHtml(item.channel)}</div>
+      </div>
+      <button class="upnext-add-btn" title="Add to playlist">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
+    `;
+
+    // Click item → navigate YouTube tab
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.upnext-add-btn')) return;
+      chrome.runtime.sendMessage({
+        type: 'NAVIGATE_YOUTUBE',
+        tabId: state.activeTabId,
+        url: item.url
+      });
+    });
+
+    // "+" button → playlist picker
+    el.querySelector('.upnext-add-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      showPlaylistPicker(e.currentTarget, {
+        title: item.title,
+        url: item.url,
+        thumbnailUrl: item.thumbnailUrl,
+        channel: item.channel,
+        videoId: item.videoId,
+        duration: item.duration
+      });
+    });
+
+    list.appendChild(el);
   });
 }
 
@@ -150,10 +243,10 @@ function renderTabs() {
     const isQueued = state.queue.some(q => q.tabId === tab.tabId);
 
     item.innerHTML = `
-      <img class="tab-item-favicon" src="${tab.favicon || ''}" alt="" onerror="this.style.display='none'">
+      <img class="tab-item-favicon" src="${escapeHtml(tab.favicon || '')}" alt="" onerror="this.style.display='none'">
       <div class="tab-item-info">
-        <div class="tab-item-title">${tab.videoTitle || tab.tabTitle || 'Media Tab'}</div>
-        <div class="tab-item-url">${getDomainFromUrl(tab.url)}</div>
+        <div class="tab-item-title">${escapeHtml(tab.videoTitle || tab.tabTitle || 'Media Tab')}</div>
+        <div class="tab-item-url">${escapeHtml(getDomainFromUrl(tab.url))}</div>
       </div>
       <div class="tab-item-controls">
         <button class="mini-ctrl play-pause-mini" data-tabid="${tab.tabId}" title="${tab.isPlaying ? 'Pause' : 'Play'}">
@@ -165,7 +258,7 @@ function renderTabs() {
         <button class="mini-ctrl goto-mini" data-tabid="${tab.tabId}" title="Go to tab">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         </button>
-        <button class="tab-queue-btn add-to-q" data-tabid="${tab.tabId}">${isQueued ? '✓ Queued' : '+ Queue'}</button>
+        <button class="tab-queue-btn add-to-q" data-tabid="${tab.tabId}">${isQueued ? 'Queued' : '+ Queue'}</button>
       </div>
     `;
 
@@ -210,7 +303,7 @@ function renderQueue() {
   const queueCount = document.getElementById('queueCount');
   const queue = state.queue;
 
-  queueCount.textContent = ` — ${queue.length} item${queue.length !== 1 ? 's' : ''}`;
+  queueCount.textContent = ` - ${queue.length} item${queue.length !== 1 ? 's' : ''}`;
 
   if (queue.length === 0) {
     queueList.innerHTML = `
@@ -232,13 +325,13 @@ function renderQueue() {
     el.dataset.index = index;
 
     el.innerHTML = `
-      <span class="queue-num">${index === state.currentQueueIndex ? '▶' : index + 1}</span>
+      <span class="queue-num">${index === state.currentQueueIndex ? '>' : index + 1}</span>
       <div class="queue-item-art">
-        ${item.thumbnail ? `<img src="${item.thumbnail}" alt="">` : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a5568" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>`}
+        ${item.thumbnail ? `<img src="${escapeHtml(item.thumbnail)}" alt="">` : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a5568" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>`}
       </div>
       <div class="queue-item-info">
-        <div class="queue-item-title">${item.title || 'Media'}</div>
-        <div class="queue-item-source">${getDomainFromUrl(item.url)}</div>
+        <div class="queue-item-title">${escapeHtml(item.title || 'Media')}</div>
+        <div class="queue-item-source">${escapeHtml(getDomainFromUrl(item.url))}</div>
       </div>
       <div class="queue-item-actions">
         <button class="q-btn play-q" data-index="${index}" title="Play now">
@@ -280,6 +373,193 @@ function renderQueue() {
   });
 }
 
+// ─── Render Playlists ────────────────────────────────────────────────────────
+
+function renderPlaylists() {
+  const listView = document.getElementById('playlistsListView');
+  const detailView = document.getElementById('playlistDetailView');
+
+  if (viewingPlaylistId) {
+    listView.style.display = 'none';
+    detailView.classList.add('active');
+    renderPlaylistDetail();
+    return;
+  }
+
+  listView.style.display = 'block';
+  detailView.classList.remove('active');
+
+  const listEl = document.getElementById('playlistsList');
+  const playlists = state.playlists || [];
+
+  if (playlists.length === 0) {
+    listEl.innerHTML = `
+      <div class="playlists-empty">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4a5568" stroke-width="1.5">
+          <path d="M9 18V5l12-2v13"/>
+          <circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+        </svg>
+        <p>No playlists yet.<br>Tap "+ New" to create one.</p>
+      </div>`;
+    return;
+  }
+
+  listEl.innerHTML = '';
+  playlists.forEach(pl => {
+    const card = document.createElement('div');
+    card.className = 'playlist-card' + (pl.id === state.activePlaylistId ? ' active-pl' : '');
+    card.innerHTML = `
+      <div class="playlist-card-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+        </svg>
+      </div>
+      <div class="playlist-card-info">
+        <div class="playlist-card-name">${escapeHtml(pl.name)}</div>
+        <div class="playlist-card-count">${pl.items.length} item${pl.items.length !== 1 ? 's' : ''}</div>
+      </div>
+      <button class="playlist-card-del" title="Delete playlist">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    `;
+
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.playlist-card-del')) return;
+      viewingPlaylistId = pl.id;
+      renderPlaylists();
+    });
+
+    card.querySelector('.playlist-card-del').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm(`Delete "${pl.name}"?`)) {
+        chrome.runtime.sendMessage({ type: 'DELETE_PLAYLIST', playlistId: pl.id });
+      }
+    });
+
+    listEl.appendChild(card);
+  });
+}
+
+function renderPlaylistDetail() {
+  const playlist = (state.playlists || []).find(p => p.id === viewingPlaylistId);
+  if (!playlist) {
+    viewingPlaylistId = null;
+    renderPlaylists();
+    return;
+  }
+
+  document.getElementById('plDetailName').textContent = playlist.name;
+  const listEl = document.getElementById('plDetailList');
+
+  if (playlist.items.length === 0) {
+    listEl.innerHTML = `<div class="pl-detail-empty"><p>This playlist is empty.<br>Add videos from the Up Next section or player.</p></div>`;
+    return;
+  }
+
+  listEl.innerHTML = '';
+  playlist.items.forEach((item, index) => {
+    const isActive = state.activePlaylistId === playlist.id && state.activePlaylistIndex === index;
+    const el = document.createElement('div');
+    el.className = 'pl-detail-item' + (isActive ? ' now-playing-item' : '');
+    el.innerHTML = `
+      <span class="pl-item-num">${isActive ? '>' : index + 1}</span>
+      <div class="pl-item-thumb">
+        ${item.thumbnailUrl ? `<img src="${escapeHtml(item.thumbnailUrl)}" alt="">` : ''}
+      </div>
+      <div class="pl-item-info">
+        <div class="pl-item-title">${escapeHtml(item.title)}</div>
+        <div class="pl-item-channel">${escapeHtml(item.channel || '')}</div>
+      </div>
+      <div class="pl-item-actions">
+        <button class="pl-item-btn play-pl-item" title="Play">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+        <button class="pl-item-btn del" title="Remove">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    `;
+
+    el.querySelector('.play-pl-item').addEventListener('click', (e) => {
+      e.stopPropagation();
+      chrome.runtime.sendMessage({ type: 'PLAY_PLAYLIST', playlistId: playlist.id, itemIndex: index });
+    });
+
+    el.querySelector('.del').addEventListener('click', (e) => {
+      e.stopPropagation();
+      chrome.runtime.sendMessage({ type: 'REMOVE_FROM_PLAYLIST', playlistId: playlist.id, itemIndex: index });
+    });
+
+    listEl.appendChild(el);
+  });
+}
+
+// ─── Playlist Picker (add to playlist dropdown) ──────────────────────────────
+
+function showPlaylistPicker(anchorEl, itemData) {
+  const picker = document.getElementById('playlistPicker');
+  const rect = anchorEl.getBoundingClientRect();
+
+  picker.style.top = `${rect.bottom + 4}px`;
+  picker.style.left = `${Math.min(rect.left, 200)}px`;
+  picker.classList.add('open');
+
+  picker.innerHTML = '';
+  const playlists = state.playlists || [];
+
+  if (playlists.length === 0) {
+    const newItem = document.createElement('div');
+    newItem.className = 'playlist-picker-item new-pl';
+    newItem.textContent = '+ Create new playlist';
+    newItem.addEventListener('click', () => {
+      picker.classList.remove('open');
+      const name = prompt('Playlist name:');
+      if (name) {
+        chrome.runtime.sendMessage({ type: 'CREATE_PLAYLIST', name }, () => {
+          // After creation, add the item to the newly created playlist
+          setTimeout(() => {
+            const latest = state.playlists[state.playlists.length - 1];
+            if (latest) {
+              chrome.runtime.sendMessage({ type: 'ADD_TO_PLAYLIST', playlistId: latest.id, item: itemData });
+            }
+          }, 300);
+        });
+      }
+    });
+    picker.appendChild(newItem);
+  } else {
+    playlists.forEach(pl => {
+      const opt = document.createElement('div');
+      opt.className = 'playlist-picker-item';
+      opt.textContent = pl.name;
+      opt.addEventListener('click', () => {
+        picker.classList.remove('open');
+        chrome.runtime.sendMessage({ type: 'ADD_TO_PLAYLIST', playlistId: pl.id, item: itemData });
+      });
+      picker.appendChild(opt);
+    });
+
+    const newItem = document.createElement('div');
+    newItem.className = 'playlist-picker-item new-pl';
+    newItem.textContent = '+ New playlist';
+    newItem.addEventListener('click', () => {
+      picker.classList.remove('open');
+      const name = prompt('Playlist name:');
+      if (name) {
+        chrome.runtime.sendMessage({ type: 'CREATE_PLAYLIST', name }, () => {
+          setTimeout(() => {
+            const latest = state.playlists[state.playlists.length - 1];
+            if (latest) {
+              chrome.runtime.sendMessage({ type: 'ADD_TO_PLAYLIST', playlistId: latest.id, item: itemData });
+            }
+          }, 300);
+        });
+      }
+    });
+    picker.appendChild(newItem);
+  }
+}
+
 // ─── Render Status ────────────────────────────────────────────────────────────
 
 function renderStatus() {
@@ -309,6 +589,9 @@ function renderAll() {
   renderTabs();
   renderQueue();
   renderStatus();
+  if (activePanel === 'playlists') {
+    renderPlaylists();
+  }
 }
 
 // ─── Controls ────────────────────────────────────────────────────────────────
@@ -337,6 +620,14 @@ document.getElementById('gotoTabBtn').addEventListener('click', () => {
 
 document.getElementById('volumeSlider').addEventListener('input', (e) => {
   sendControl('volume', parseFloat(e.target.value));
+});
+
+// Loop button
+document.getElementById('loopBtn').addEventListener('click', () => {
+  const modes = ['none', 'one', 'all'];
+  const currentIdx = modes.indexOf(state.loopMode);
+  const nextMode = modes[(currentIdx + 1) % modes.length];
+  chrome.runtime.sendMessage({ type: 'SET_LOOP_MODE', mode: nextMode });
 });
 
 // Progress bar seek
@@ -370,6 +661,11 @@ document.addEventListener('click', () => {
     speedPopoverOpen = false;
     document.getElementById('speedPopover').classList.remove('open');
   }
+  // Close playlist picker
+  const picker = document.getElementById('playlistPicker');
+  if (picker.classList.contains('open')) {
+    picker.classList.remove('open');
+  }
 });
 
 // Add current to queue
@@ -389,9 +685,52 @@ document.getElementById('addCurrentToQueue').addEventListener('click', () => {
   }
 });
 
+// Add current to playlist
+document.getElementById('addCurrentToPlaylist').addEventListener('click', (e) => {
+  const activeTab = state.activeTabId ? state.tabs[state.activeTabId] : null;
+  if (activeTab) {
+    showPlaylistPicker(e.currentTarget, {
+      title: activeTab.videoTitle || activeTab.tabTitle,
+      url: activeTab.url,
+      thumbnailUrl: activeTab.thumbnail || activeTab.favicon || '',
+      channel: activeTab.channel || '',
+      videoId: '',
+      duration: activeTab.duration ? formatTime(activeTab.duration) : ''
+    });
+  }
+});
+
+// Up Next toggle
+document.getElementById('upNextHeader').addEventListener('click', () => {
+  upNextCollapsed = !upNextCollapsed;
+  const activeTab = state.activeTabId ? state.tabs[state.activeTabId] : null;
+  renderUpNext(activeTab);
+});
+
 // Clear queue
 document.getElementById('clearQueueBtn').addEventListener('click', () => {
   chrome.runtime.sendMessage({ type: 'CLEAR_QUEUE' });
+});
+
+// New playlist
+document.getElementById('newPlaylistBtn').addEventListener('click', () => {
+  const name = prompt('Playlist name:');
+  if (name) {
+    chrome.runtime.sendMessage({ type: 'CREATE_PLAYLIST', name });
+  }
+});
+
+// Playlist detail: back button
+document.getElementById('plBackBtn').addEventListener('click', () => {
+  viewingPlaylistId = null;
+  renderPlaylists();
+});
+
+// Playlist detail: play all
+document.getElementById('plPlayAllBtn').addEventListener('click', () => {
+  if (viewingPlaylistId) {
+    chrome.runtime.sendMessage({ type: 'PLAY_PLAYLIST', playlistId: viewingPlaylistId, itemIndex: 0 });
+  }
 });
 
 // ─── State sync ───────────────────────────────────────────────────────────────

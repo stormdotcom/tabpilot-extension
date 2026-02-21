@@ -35,7 +35,7 @@
     body {
       width: 380px;
       min-height: 200px;
-      max-height: 580px;
+      max-height: 600px;
       background: var(--bg);
       color: var(--text);
       font-family: 'Syne', sans-serif;
@@ -97,12 +97,12 @@
     }
 
     .tab-btn {
-      padding: 4px 10px;
+      padding: 4px 8px;
       border: none;
       background: transparent;
       color: var(--text2);
       font-family: 'Syne', sans-serif;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       letter-spacing: 0.05em;
       cursor: pointer;
@@ -125,7 +125,9 @@
       display: flex;
       flex-direction: column;
       flex: 1;
-      overflow: hidden;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--surface2) transparent;
     }
 
     /* Empty state */
@@ -415,6 +417,7 @@
       align-items: center;
       justify-content: center;
       transition: all 0.15s;
+      position: relative;
     }
 
     .ctrl-btn:hover {
@@ -423,6 +426,18 @@
     }
 
     .ctrl-btn svg { width: 16px; height: 16px; }
+
+    .ctrl-btn.active { color: var(--teal); }
+
+    .loop-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      font-size: 7px;
+      font-weight: 800;
+      color: var(--teal);
+      font-family: 'DM Mono', monospace;
+    }
 
     .play-btn {
       width: 40px;
@@ -868,6 +883,469 @@
     .player-area {
       position: relative;
     }
+
+    /* ─── Up Next section ───────────────────────────────────── */
+    .upnext-section {
+      margin: 8px 14px 0;
+    }
+
+    .upnext-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 6px 0;
+    }
+
+    .upnext-header-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .upnext-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .upnext-count {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text3);
+    }
+
+    .upnext-chevron {
+      color: var(--text3);
+      transition: transform 0.2s;
+    }
+
+    .upnext-chevron.open { transform: rotate(180deg); }
+
+    .upnext-list {
+      max-height: 180px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--surface2) transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding-bottom: 4px;
+    }
+
+    .upnext-list.collapsed { display: none; }
+
+    .upnext-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 7px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .upnext-item:hover {
+      border-color: var(--border);
+      background: var(--surface2);
+    }
+
+    .upnext-thumb {
+      width: 48px;
+      height: 27px;
+      border-radius: 3px;
+      background: var(--surface2);
+      flex-shrink: 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .upnext-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .upnext-duration {
+      position: absolute;
+      bottom: 1px;
+      right: 1px;
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      font-family: 'DM Mono', monospace;
+      font-size: 8px;
+      padding: 1px 3px;
+      border-radius: 2px;
+    }
+
+    .upnext-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .upnext-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.3;
+    }
+
+    .upnext-channel {
+      font-size: 10px;
+      color: var(--text3);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .upnext-add-btn {
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      color: var(--text3);
+      cursor: pointer;
+      padding: 3px 5px;
+      display: flex;
+      align-items: center;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .upnext-add-btn:hover {
+      border-color: var(--teal);
+      color: var(--teal);
+    }
+
+    .upnext-add-btn svg { width: 12px; height: 12px; }
+
+    /* ─── Playlist picker dropdown ─────────────────────────── */
+    .playlist-picker {
+      position: fixed;
+      z-index: 200;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      min-width: 160px;
+      max-height: 180px;
+      overflow-y: auto;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
+
+    .playlist-picker.open { display: flex; }
+
+    .playlist-picker-item {
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text2);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .playlist-picker-item:hover {
+      background: var(--surface);
+      color: var(--teal);
+    }
+
+    .playlist-picker-item.new-pl {
+      color: var(--teal);
+      border-top: 1px solid var(--border2);
+      margin-top: 2px;
+      padding-top: 8px;
+    }
+
+    /* ─── Playlists panel ──────────────────────────────────── */
+    .playlists-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px 8px;
+    }
+
+    .playlists-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .new-playlist-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--teal);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+      padding: 4px 10px;
+      transition: all 0.2s;
+    }
+
+    .new-playlist-btn:hover {
+      background: var(--teal-dim);
+    }
+
+    .playlists-list {
+      padding: 0 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      overflow-y: auto;
+      flex: 1;
+      scrollbar-width: thin;
+      scrollbar-color: var(--surface2) transparent;
+    }
+
+    .playlist-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 11px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .playlist-card:hover { border-color: var(--border); }
+
+    .playlist-card.active-pl {
+      border-color: var(--teal);
+      background: var(--teal-dim);
+    }
+
+    .playlist-card-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--text3);
+    }
+
+    .playlist-card-info { flex: 1; min-width: 0; }
+
+    .playlist-card-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .playlist-card-count {
+      font-size: 10px;
+      color: var(--text3);
+    }
+
+    .playlist-card-del {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text3);
+      padding: 4px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      transition: all 0.15s;
+      flex-shrink: 0;
+      opacity: 0;
+    }
+
+    .playlist-card:hover .playlist-card-del { opacity: 1; }
+    .playlist-card-del:hover { color: var(--red); }
+    .playlist-card-del svg { width: 13px; height: 13px; }
+
+    .playlists-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 30px;
+      flex: 1;
+    }
+
+    .playlists-empty p { font-size: 12px; color: var(--text3); text-align: center; }
+
+    /* ─── Playlist detail view ─────────────────────────────── */
+    .playlist-detail { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+    .playlist-detail.active { display: flex; }
+
+    .pl-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px 8px;
+    }
+
+    .pl-back-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text2);
+      padding: 4px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      transition: all 0.15s;
+    }
+
+    .pl-back-btn:hover { color: var(--teal); }
+    .pl-back-btn svg { width: 16px; height: 16px; }
+
+    .pl-detail-name {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pl-play-all-btn {
+      background: var(--teal);
+      border: none;
+      border-radius: 4px;
+      color: var(--bg);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+      padding: 5px 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+
+    .pl-play-all-btn:hover { opacity: 0.85; }
+    .pl-play-all-btn svg { width: 11px; height: 11px; }
+
+    .pl-detail-list {
+      padding: 0 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow-y: auto;
+      flex: 1;
+      scrollbar-width: thin;
+      scrollbar-color: var(--surface2) transparent;
+    }
+
+    .pl-detail-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      transition: all 0.15s;
+    }
+
+    .pl-detail-item:hover { border-color: var(--border); }
+
+    .pl-detail-item.now-playing-item {
+      border-color: var(--teal);
+      background: var(--teal-dim);
+    }
+
+    .pl-item-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text3);
+      width: 16px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .pl-item-thumb {
+      width: 36px;
+      height: 20px;
+      border-radius: 3px;
+      background: var(--surface2);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .pl-item-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+    .pl-item-info { flex: 1; min-width: 0; }
+
+    .pl-item-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pl-item-channel {
+      font-size: 9px;
+      color: var(--text3);
+    }
+
+    .pl-item-actions {
+      display: flex;
+      gap: 3px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      flex-shrink: 0;
+    }
+
+    .pl-detail-item:hover .pl-item-actions { opacity: 1; }
+
+    .pl-item-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text3);
+      padding: 3px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      transition: all 0.15s;
+    }
+
+    .pl-item-btn:hover { color: var(--text); }
+    .pl-item-btn.del:hover { color: var(--red); }
+    .pl-item-btn svg { width: 12px; height: 12px; }
+
+    .pl-detail-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 24px;
+      color: var(--text3);
+      font-size: 12px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -885,9 +1363,10 @@
       <span class="logo-text">TabPilot</span>
     </div>
     <div class="header-tabs">
-      <button class="tab-btn active" data-panel="player">Now Playing</button>
+      <button class="tab-btn active" data-panel="player">Playing</button>
       <button class="tab-btn" data-panel="tabs">Tabs</button>
       <button class="tab-btn" data-panel="queue">Queue</button>
+      <button class="tab-btn" data-panel="playlists">Playlists</button>
     </div>
   </div>
 
@@ -952,6 +1431,15 @@
                     <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
                   </svg>
                 </button>
+                <button class="ctrl-btn" id="loopBtn" title="Loop mode">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="17 1 21 5 17 9"/>
+                    <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                    <polyline points="7 23 3 19 7 15"/>
+                    <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                  </svg>
+                  <span class="loop-badge" id="loopBadge"></span>
+                </button>
               </div>
               <div class="ctrl-group">
                 <button class="ctrl-btn" id="skipBackBtn" title="-10s">
@@ -975,14 +1463,14 @@
                 </button>
               </div>
               <div class="ctrl-group" style="position:relative;">
-                <button class="speed-btn" id="speedBtn">1×</button>
+                <button class="speed-btn" id="speedBtn">1x</button>
                 <div class="speed-popover" id="speedPopover">
-                  <div class="speed-option" data-speed="0.5">0.5×</div>
-                  <div class="speed-option" data-speed="0.75">0.75×</div>
-                  <div class="speed-option selected" data-speed="1">1×</div>
-                  <div class="speed-option" data-speed="1.25">1.25×</div>
-                  <div class="speed-option" data-speed="1.5">1.5×</div>
-                  <div class="speed-option" data-speed="2">2×</div>
+                  <div class="speed-option" data-speed="0.5">0.5x</div>
+                  <div class="speed-option" data-speed="0.75">0.75x</div>
+                  <div class="speed-option selected" data-speed="1">1x</div>
+                  <div class="speed-option" data-speed="1.25">1.25x</div>
+                  <div class="speed-option" data-speed="1.5">1.5x</div>
+                  <div class="speed-option" data-speed="2">2x</div>
                 </div>
               </div>
             </div>
@@ -997,12 +1485,33 @@
             </div>
           </div>
 
-          <button class="add-current-btn" id="addCurrentToQueue">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Add to Queue
-          </button>
+          <!-- Add to Queue / Playlist buttons -->
+          <div style="display:flex; gap:6px; margin:8px 14px 10px;">
+            <button class="add-current-btn" id="addCurrentToQueue" style="flex:1; margin:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Add to Queue
+            </button>
+            <button class="add-current-btn" id="addCurrentToPlaylist" style="flex:1; margin:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Add to Playlist
+            </button>
+          </div>
+
+          <!-- Up Next Section (YouTube only) -->
+          <div class="upnext-section" id="upNextSection" style="display:none;">
+            <div class="upnext-header" id="upNextHeader">
+              <div class="upnext-header-left">
+                <span class="upnext-label">Up Next on YouTube</span>
+                <span class="upnext-count" id="upNextCount"></span>
+              </div>
+              <svg class="upnext-chevron" id="upNextChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="upnext-list" id="upNextList"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1029,7 +1538,7 @@
     <div class="queue-header">
       <div>
         <span class="queue-title">Up Next</span>
-        <span class="queue-count" id="queueCount"> — 0 items</span>
+        <span class="queue-count" id="queueCount"> - 0 items</span>
       </div>
       <button class="clear-btn" id="clearQueueBtn">Clear all</button>
     </div>
@@ -1044,6 +1553,35 @@
       </div>
     </div>
   </div>
+
+  <!-- Playlists Panel -->
+  <div class="panel" id="panel-playlists">
+    <!-- List view -->
+    <div id="playlistsListView">
+      <div class="playlists-header">
+        <span class="playlists-title">Playlists</span>
+        <button class="new-playlist-btn" id="newPlaylistBtn">+ New</button>
+      </div>
+      <div class="playlists-list" id="playlistsList"></div>
+    </div>
+    <!-- Detail view -->
+    <div class="playlist-detail" id="playlistDetailView">
+      <div class="pl-detail-header">
+        <button class="pl-back-btn" id="plBackBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="pl-detail-name" id="plDetailName"></span>
+        <button class="pl-play-all-btn" id="plPlayAllBtn">
+          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Play All
+        </button>
+      </div>
+      <div class="pl-detail-list" id="plDetailList"></div>
+    </div>
+  </div>
+
+  <!-- Playlist picker dropdown (used for "add to playlist" flow) -->
+  <div class="playlist-picker" id="playlistPicker"></div>
 
   <!-- Status bar -->
   <div class="status-bar">
