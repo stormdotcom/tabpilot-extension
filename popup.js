@@ -748,6 +748,17 @@ document.getElementById('refreshBtn').addEventListener('click', (e) => {
   }, 500);
 });
 
+// Website and Privacy links
+document.getElementById('websiteLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  chrome.tabs.create({ url: chrome.runtime.getURL('website/index.html') });
+});
+
+document.getElementById('privacyLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  chrome.tabs.create({ url: chrome.runtime.getURL('website/privacy.html') });
+});
+
 // ─── State sync ───────────────────────────────────────────────────────────────
 
 chrome.runtime.onMessage.addListener((message) => {

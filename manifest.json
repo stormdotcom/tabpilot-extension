@@ -3,15 +3,10 @@
   "name": "TabPilot",
   "version": "1.0.0",
   "description": "System-wide media remote living in your browser. Control YouTube and HTML5 video from any tab.",
-  "permissions": [
-    "tabs",
-    "scripting",
-    "storage",
-    "activeTab"
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
+  "author": "Ajmal",
+  "homepage_url": "https://github.com/stoner-stoner/tabpilot-extension",
+  "permissions": ["tabs", "scripting", "storage", "activeTab"],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },
