@@ -8,13 +8,20 @@ let cachedUpNext = null;
 
 function getYouTubeInfo() {
   try {
-    // YouTube specific selectors
-    const titleEl = document.querySelector('h1.ytd-video-primary-info-renderer yt-formatted-string, .ytd-watch-metadata h1 yt-formatted-string, h1.style-scope.ytd-watch-metadata');
-    const channelEl = document.querySelector('#channel-name a, .ytd-channel-name a');
+    // YouTube specific selectors - updated for modern YT layouts
+    const titleEl = document.querySelector('h1.ytd-video-primary-info-renderer yt-formatted-string, .ytd-watch-metadata h1 yt-formatted-string, h1.style-scope.ytd-watch-metadata, #container > h1 > yt-formatted-string');
+    const channelEl = document.querySelector('#channel-name a, .ytd-channel-name a, #upload-info #channel-name, .ytd-video-owner-renderer #channel-name');
     const thumbnail = document.querySelector('link[rel="shortcut icon"]')?.href || '';
 
+    let videoTitle = titleEl?.textContent?.trim();
+    
+    // Fallback: try capturing from title tag if specific selector fails
+    if (!videoTitle || videoTitle === '') {
+      videoTitle = document.title.replace(' - YouTube', '').trim();
+    }
+
     return {
-      videoTitle: titleEl?.textContent?.trim() || document.title,
+      videoTitle: videoTitle || 'YouTube Video',
       channel: channelEl?.textContent?.trim() || '',
       isYouTube: true,
       thumbnail
@@ -59,10 +66,23 @@ function getYouTubeUpNext() {
 }
 
 function getMediaState() {
-  const videos = Array.from(document.querySelectorAll('video')).filter(v => v.readyState > 0 && v.duration > 0);
-  const audios = Array.from(document.querySelectorAll('audio')).filter(a => a.readyState > 0 && a.duration > 0);
+  // Be more inclusive: include videos that might be buffering (readyState > 0)
+  // or even readyState 0 if they are clearly the main video on a media site.
+  const allVideos = Array.from(document.querySelectorAll('video'));
+  const allAudios = Array.from(document.querySelectorAll('audio'));
+  
+  const videos = allVideos.filter(v => (v.readyState > 0 && v.duration > 0) || (location.hostname.includes('youtube.com') && v.id === 'movie_player'));
+  const audios = allAudios.filter(a => a.readyState > 0 && a.duration > 0);
 
   const media = [...videos, ...audios];
+  if (media.length === 0 && allVideos.length > 0) {
+    // Fallback for YouTube specifically if primary filters fail
+    if (location.hostname.includes('youtube.com')) {
+       const ytVideo = document.querySelector('video.html5-main-video');
+       if (ytVideo) media.push(ytVideo);
+    }
+  }
+
   if (media.length === 0) return null;
 
   // Prefer playing media, else take first

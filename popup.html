@@ -85,6 +85,7 @@
       letter-spacing: 0.03em;
       background: linear-gradient(135deg, var(--teal), var(--cyan));
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
@@ -168,12 +169,14 @@
 
     /* Media source selector */
     .sources-bar {
-      padding: 10px 14px 0;
+      padding: 10px 14px 4px;
       display: flex;
       gap: 6px;
       overflow-x: auto;
       scrollbar-width: none;
+      -ms-overflow-style: none;
     }
+    .sources-bar::-webkit-scrollbar { display: none; }
 
     .source-chip {
       display: flex;
@@ -477,6 +480,7 @@
     .vol-slider {
       flex: 1;
       -webkit-appearance: none;
+      appearance: none;
       height: 3px;
       background: var(--surface2);
       border-radius: 2px;
@@ -845,9 +849,14 @@
     }
 
     /* Scrollbars */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 2px; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { 
+      background: var(--surface); 
+      border-radius: 10px;
+      border: 1px solid var(--border2);
+    }
+    ::-webkit-scrollbar-thumb:hover { background: var(--surface2); }
 
     /* Speed dropdown */
     .speed-popover {
@@ -1588,6 +1597,11 @@
     <div class="status-left">
       <div class="status-dot" id="statusDot"></div>
       <span class="status-text" id="statusText">Scanning...</span>
+      <button class="mini-ctrl" id="refreshBtn" title="Scan for media" style="margin-left:4px; padding:2px 4px; height:18px; border:none; background:transparent;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:10px; height:10px;">
+          <path d="M23 4v6h-6M1.7 20a10 10 0 0 1 1.7-11.3 10 10 0 0 1 12.6-1.5M1 20v-6h6M22.3 4a10 10 0 0 1-1.7 11.3 10 10 0 0 1-12.6 1.5"/>
+        </svg>
+      </button>
     </div>
     <span class="media-count" id="mediaCount"></span>
   </div>

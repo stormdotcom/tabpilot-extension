@@ -336,6 +336,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
       break;
     }
+    
+    case 'SCAN_FOR_MEDIA': {
+      scanForMedia();
+      sendResponse({ success: true });
+      break;
+    }
   }
   return true;
 });

@@ -733,6 +733,21 @@ document.getElementById('plPlayAllBtn').addEventListener('click', () => {
   }
 });
 
+// Manual refresh button
+document.getElementById('refreshBtn').addEventListener('click', (e) => {
+  const btn = e.currentTarget;
+  btn.style.transition = 'transform 0.5s ease-in-out';
+  btn.style.transform = 'rotate(360deg)';
+  
+  // Trigger scan in background
+  chrome.runtime.sendMessage({ type: 'SCAN_FOR_MEDIA' });
+  
+  setTimeout(() => {
+    btn.style.transition = 'none';
+    btn.style.transform = 'rotate(0deg)';
+  }, 500);
+});
+
 // ─── State sync ───────────────────────────────────────────────────────────────
 
 chrome.runtime.onMessage.addListener((message) => {
