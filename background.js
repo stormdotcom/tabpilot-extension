@@ -14,7 +14,11 @@ let mediaState = {
 
 // Load playlists from storage on startup
 chrome.storage.local.get('tabpilot_playlists', (result) => {
-  if (result.tabpilot_playlists) {
+  if (chrome.runtime.lastError) {
+    console.error('TabPilot Storage Error:', chrome.runtime.lastError);
+    return;
+  }
+  if (result && result.tabpilot_playlists) {
     mediaState.playlists = result.tabpilot_playlists;
   }
 });
