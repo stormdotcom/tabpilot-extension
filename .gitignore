@@ -11,20 +11,32 @@ Thumbs.db
 # IDE files
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *.sublime-project
 *.sublime-workspace
+
+# Build and dependencies
+node_modules/
+dist/
+out/
+build/
 
 # Extension specific
 *.zip
 *.crx
 *.pem
 
-# Local documentation / logs
+# Local documentation / logs / secrets
 uploadcontent.txt
 *.log
 npm-debug.log*
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Gemini/AI artifacts
 .gemini/
